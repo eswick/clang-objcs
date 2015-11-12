@@ -7071,7 +7071,8 @@ public:
     OCK_Category,
     OCK_ClassExtension,
     OCK_Implementation,
-    OCK_CategoryImplementation
+    OCK_CategoryImplementation,
+    OCK_Hook
   };
   ObjCContainerKind getObjCContainerKind() const;
 
@@ -7158,6 +7159,9 @@ public:
                                          SourceLocation ClassLoc,
                                          IdentifierInfo *CatName,
                                          SourceLocation CatLoc);
+                                         
+  Decl *ActOnStartHook(SourceLocation AtHookLoc,
+                       IdentifierInfo *ClassName, SourceLocation ClassLoc);
 
   DeclGroupPtrTy ActOnFinishObjCImplementation(Decl *ObjCImpDecl,
                                                ArrayRef<Decl *> Decls);

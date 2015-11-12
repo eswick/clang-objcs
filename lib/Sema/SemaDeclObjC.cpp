@@ -1971,6 +1971,71 @@ Sema::ActOnFinishObjCImplementation(Decl *ObjCImpDecl, ArrayRef<Decl *> Decls) {
   return BuildDeclaratorGroup(DeclsInGroup, false);
 }
 
+Decl *Sema::ActOnStartHook(SourceLocation AtHookLoc,
+                          IdentifierInfo *HookName, SourceLocation ClassLoc) {
+  ObjCInterfaceDecl *IDecl = nullptr;
+  // Check for another declaration kind with the same name.
+  NamedDecl *PrevDecl
+    = LookupSingleName(TUScope, HookName, ClassLoc, LookupOrdinaryName,
+                       ForRedeclaration);
+  if (PrevDecl && isa<ObjCHookDecl>(PrevDecl)) {
+    Diag(ClassLoc, diag::err_redefinition_different_kind) << HookName;
+    Diag(PrevDecl->getLocation(), diag::note_previous_definition);
+  } else if ((IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl))) {
+    RequireCompleteType(ClassLoc, Context.getObjCInterfaceType(IDecl),
+                        diag::warn_undef_interface);
+  } else {
+    // We did not find anything with the name HookName; try to correct for
+    // typos in the class name.
+    TypoCorrection Corrected = CorrectTypo(
+        DeclarationNameInfo(HookName, ClassLoc), LookupOrdinaryName, TUScope,
+        nullptr, llvm::make_unique<ObjCInterfaceValidatorCCC>(), CTK_NonError);
+    if (Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>()) {
+      // Suggest the (potentially) correct interface name. Don't provide a
+      // code-modification hint or use the typo name for recovery, because
+      // this is just a warning. The program may actually be correct.
+      diagnoseTypo(Corrected,
+                   PDiag(diag::warn_undef_interface_suggest) << HookName,
+                   /*ErrorRecovery*/false);
+    } else {
+      Diag(ClassLoc, diag::warn_undef_interface) << HookName;
+    }
+  }
+  
+  if (!IDecl) {
+    // Legacy case of @hook with no corresponding @interface.
+    // Build, chain & install the interface decl into the identifier.
+    
+    // FIXME: Do we support attributes on the @implementation? If so we should
+    // copy them over.
+    IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtHookLoc,
+                                      HookName, /*typeParamList=*/nullptr,
+                                      /*PrevDecl=*/nullptr, ClassLoc,
+                                      true);
+    IDecl->startDefinition();
+    IDecl->setEndOfDefinitionLoc(ClassLoc);
+    PushOnScopeChains(IDecl, TUScope);
+  } else {
+    // Mark the interface as being completed, even if it was just as
+    //   @class ....;
+    // declaration; the user cannot reopen it.
+    if (!IDecl->hasDefinition())
+      IDecl->startDefinition();
+  }
+  
+  ObjCHookDecl *HookDecl = 
+    ObjCHookDecl::Create(Context, CurContext, IDecl, ClassLoc, AtHookLoc);
+  
+  
+  if (CheckObjCDeclScope(HookDecl))
+    return ActOnObjCContainerStartDefinition(HookDecl);
+  
+  // TODO: Check that there is no duplicate hook of this class.
+  PushOnScopeChains(HookDecl, TUScope);
+  
+  return ActOnObjCContainerStartDefinition(HookDecl);
+}
+
 void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
                                     ObjCIvarDecl **ivars, unsigned numIvars,
                                     SourceLocation RBrace) {
@@ -3492,7 +3557,8 @@ Sema::ObjCContainerKind Sema::getObjCContainerKind() const {
       return Sema::OCK_Implementation;
     case Decl::ObjCCategoryImpl:
       return Sema::OCK_CategoryImplementation;
-
+    case Decl::ObjCHook:
+      return Sema::OCK_Hook;
     default:
       return Sema::OCK_None;
   }

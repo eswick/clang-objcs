@@ -255,6 +255,8 @@ def err_expected_property_name : Error<"expected property name">;
 def err_unexpected_at : Error<"unexpected '@' in program">;
 def err_atimport : Error<
 "use of '@import' when modules are disabled">;
+def err_athook : Error<
+"use of '@hook' when Objective-CS is disabled">;
 
 def err_invalid_reference_qualifier_application : Error<
   "'%0' qualifier may not be applied to a reference">;
@@ -409,7 +411,7 @@ def err_objc_no_attributes_on_category : Error<
 def err_objc_missing_end : Error<"missing '@end'">;
 def note_objc_container_start : Note<
   "%select{class|protocol|category|class extension|implementation"
-  "|category implementation}0 started here">;
+  "|category implementation|hook}0 started here">;
 def warn_objc_protocol_qualifier_missing_id : Warning<
   "protocol has no object type specified; defaults to qualified 'id'">;
 def err_objc_unknown_at : Error<"expected an Objective-C directive after '@'">;

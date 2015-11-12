@@ -40,6 +40,7 @@ void Parser::MaybeSkipAttributes(tok::ObjCKeywordKind Kind) {
 ///       external-declaration: [C99 6.9]
 /// [OBJC]  objc-class-definition
 /// [OBJC]  objc-class-declaration
+/// [OBJC]  objc-hook-definition
 /// [OBJC]  objc-alias-declaration
 /// [OBJC]  objc-protocol-definition
 /// [OBJC]  objc-method-definition
@@ -83,6 +84,12 @@ Parser::DeclGroupPtrTy Parser::ParseObjCAtDirectives() {
     if (getLangOpts().Modules || getLangOpts().DebuggerSupport)
       return ParseModuleImport(AtLoc);
     Diag(AtLoc, diag::err_atimport);
+    SkipUntil(tok::semi);
+    return Actions.ConvertDeclToDeclGroup(nullptr);
+  case tok::objc_hook:
+    if (getLangOpts().ObjCS)
+      return ParseObjCAtHookDeclaration(AtLoc);
+    Diag(AtLoc, diag::err_athook);
     SkipUntil(tok::semi);
     return Actions.ConvertDeclToDeclGroup(nullptr);
   default:
@@ -2216,6 +2223,49 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
   }
 
   return Actions.ActOnFinishObjCImplementation(ObjCImpDecl, DeclsInGroup);
+}
+
+Parser::DeclGroupPtrTy
+Parser::ParseObjCAtHookDeclaration(SourceLocation AtLoc) {
+  assert(Tok.isObjCAtKeyword(tok::objc_hook) &&
+         "ParseObjCAtHookDeclaration(): Expected @hook");
+    
+  CheckNestedObjCContexts(AtLoc);
+  ConsumeToken(); // the "hook" identifier
+  
+  // TODO: Code completion
+  
+  if (Tok.isNot(tok::identifier)) {
+    Diag(Tok, diag::err_expected)
+        << tok::identifier; // missing hook name
+    return DeclGroupPtrTy();
+  }
+  
+  // We have a hook name - consume it
+  IdentifierInfo *nameId = Tok.getIdentifierInfo();
+  SourceLocation nameLoc = ConsumeToken(); // consume hook name
+  Decl *HookDecl = 0;
+  
+  HookDecl = Actions.ActOnStartHook(AtLoc, nameId, nameLoc);
+  
+  assert(HookDecl);
+  
+  SmallVector<Decl *, 8> DeclsInGroup;
+  
+  {
+    ObjCImplParsingDataRAII ObjCImplParsing(*this, HookDecl);
+    while (!ObjCImplParsing.isFinished() && Tok.isNot(tok::eof)) {
+      ParsedAttributesWithRange attrs(AttrFactory);
+      MaybeParseCXX11Attributes(attrs);
+      MaybeParseMicrosoftAttributes(attrs);
+      if (DeclGroupPtrTy DGP = ParseExternalDeclaration(attrs)) {
+        DeclGroupRef DG = DGP.get();
+        DeclsInGroup.append(DG.begin(), DG.end());
+      }
+    }
+  }
+  
+  return Actions.ActOnFinishObjCImplementation(HookDecl, DeclsInGroup);
 }
 
 Parser::DeclGroupPtrTy

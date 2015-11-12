@@ -952,6 +952,7 @@ DeclContext *DeclContext::getPrimaryContext() {
 
   case Decl::ObjCImplementation:
   case Decl::ObjCCategoryImpl:
+  case Decl::ObjCHook:
     return this;
 
   default:
