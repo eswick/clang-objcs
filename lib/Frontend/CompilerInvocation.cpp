@@ -1424,6 +1424,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     if (Args.hasArg(OPT_fobjc_subscripting_legacy_runtime))
       Opts.ObjCSubscriptingLegacyRuntime =
         (Opts.ObjCRuntime.getKind() == ObjCRuntime::FragileMacOSX);
+
+    if (Args.hasArg(OPT_fobjcs))
+      Opts.ObjCS = 1;
   }
     
   if (Args.hasArg(OPT_fgnu89_inline)) {
