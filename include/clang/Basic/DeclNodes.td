@@ -69,6 +69,7 @@ def Named : Decl<1>;
     def ObjCImpl : DDecl<ObjCContainer, 1>;
       def ObjCCategoryImpl : DDecl<ObjCImpl>;
       def ObjCImplementation : DDecl<ObjCImpl>;
+      def ObjCHook : DDecl<ObjCImpl>;
   def ObjCProperty : DDecl<Named>;
   def ObjCCompatibleAlias : DDecl<Named>;
 def LinkageSpec : Decl, DeclContext;

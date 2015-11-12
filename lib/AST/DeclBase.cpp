@@ -620,6 +620,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ObjCImplementation:
     case ObjCCategory:
     case ObjCCategoryImpl:
+    case ObjCHook:
     case Import:
     case OMPThreadPrivate:
     case Empty:

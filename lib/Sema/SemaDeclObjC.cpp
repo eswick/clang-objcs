@@ -3866,8 +3866,15 @@ private:
     if (ObjCInterfaceDecl *Interface = impl->getClassInterface())
       search(Interface);
   }
-
-
+  
+  void searchFrom(ObjCHookDecl *hook) {
+    // A method in a hook overrides declarations from
+    // the class interface.
+    if (ObjCInterfaceDecl *Interface = hook->getClassInterface())
+      search(Interface);
+  }
+  
+  
   void search(const ObjCProtocolList &protocols) {
     for (ObjCProtocolList::iterator i = protocols.begin(), e = protocols.end();
          i != e; ++i)

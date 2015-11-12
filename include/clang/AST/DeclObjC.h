@@ -2388,6 +2388,32 @@ public:
 
 raw_ostream &operator<<(raw_ostream &OS, const ObjCImplementationDecl &ID);
 
+/// ObjCHookDecl - Represents a class hook definition - this is where
+/// method hooks are specified. For example:
+///
+/// @code
+/// \@hook MyClass
+/// - (void)myMethod { /* do something */ }
+/// \@end
+/// @endcode
+///
+class ObjCHookDecl : public ObjCImplDecl {
+  virtual void anchor();
+  
+  ObjCHookDecl(DeclContext *DC,
+               ObjCInterfaceDecl *classInterface,
+               SourceLocation nameLoc, SourceLocation atStartLoc)
+  : ObjCImplDecl(ObjCHook, DC, classInterface, nameLoc, atStartLoc) {}
+public:
+  static ObjCHookDecl *Create(ASTContext &C, DeclContext *DC,
+                              ObjCInterfaceDecl *classInterface,
+                              SourceLocation nameLoc,
+                              SourceLocation atStartLoc);
+
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) { return K == ObjCHook; }
+};
+
 /// ObjCCompatibleAliasDecl - Represents alias of a class. This alias is
 /// declared as \@compatibility_alias alias class.
 class ObjCCompatibleAliasDecl : public NamedDecl {

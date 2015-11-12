@@ -122,11 +122,12 @@ serialization::getDefinitiveDeclContext(const DeclContext *DC) {
   case Decl::ObjCMethod:
   case Decl::Block:
   case Decl::Captured:
-    // Objective C categories, category implementations, and class
-    // implementations can only be defined in one place.
+    // Objective C categories, category implementations, class
+    // implementations, and hooks can only be defined in one place.
   case Decl::ObjCCategory:
   case Decl::ObjCCategoryImpl:
   case Decl::ObjCImplementation:
+  case Decl::ObjCHook:
     return DC;
 
   case Decl::ObjCProtocol:
@@ -201,6 +202,7 @@ bool serialization::isRedeclarableDeclKind(unsigned Kind) {
   case Decl::ObjCCategory:
   case Decl::ObjCCategoryImpl:
   case Decl::ObjCImplementation:
+  case Decl::ObjCHook:
   case Decl::ObjCProperty:
   case Decl::ObjCCompatibleAlias:
   case Decl::LinkageSpec:

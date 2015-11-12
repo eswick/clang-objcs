@@ -1167,6 +1167,10 @@ bool CursorVisitor::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   return VisitObjCImplDecl(D);
 }
 
+bool CursorVisitor::VisitObjCHookDecl(ObjCHookDecl *D) {
+  return VisitObjCImplDecl(D);
+}
+
 bool CursorVisitor::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PD) {
   if (ObjCIvarDecl *Ivar = PD->getPropertyIvarDecl())
     if (PD->isIvarNameSpecified())
@@ -5088,6 +5092,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::TemplateTemplateParm:
   case Decl::ObjCCategoryImpl:
   case Decl::ObjCImplementation:
+  case Decl::ObjCHook:
   case Decl::AccessSpec:
   case Decl::LinkageSpec:
   case Decl::ObjCPropertyImpl:
@@ -6377,6 +6382,7 @@ static CXLanguageKind getDeclLanguage(const Decl *D) {
     case Decl::ObjCCategoryImpl:
     case Decl::ObjCCompatibleAlias:
     case Decl::ObjCImplementation:
+    case Decl::ObjCHook:
     case Decl::ObjCInterface:
     case Decl::ObjCIvar:
     case Decl::ObjCMethod:

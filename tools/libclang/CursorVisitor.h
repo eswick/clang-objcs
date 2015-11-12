@@ -228,6 +228,7 @@ public:
   bool VisitObjCImplDecl(ObjCImplDecl *D);
   bool VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
   bool VisitObjCImplementationDecl(ObjCImplementationDecl *D);
+  bool VisitObjCHookDecl(ObjCHookDecl *D);
   // FIXME: ObjCCompatibleAliasDecl requires aliased-class locations.
   bool VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PD);
   bool VisitLinkageSpecDecl(LinkageSpecDecl *D);
