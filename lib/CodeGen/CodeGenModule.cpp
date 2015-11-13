@@ -17,6 +17,7 @@
 #include "CGCall.h"
 #include "CGDebugInfo.h"
 #include "CGObjCRuntime.h"
+#include "CGObjCSRuntime.h"
 #include "CGOpenCLRuntime.h"
 #include "CGOpenMPRuntime.h"
 #include "CodeGenFunction.h"
@@ -117,6 +118,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const HeaderSearchOptions &HSO,
 
   if (LangOpts.ObjC1)
     createObjCRuntime();
+  if (LangOpts.ObjCS)
+    createObjCSRuntime();
   if (LangOpts.OpenCL)
     createOpenCLRuntime();
   if (LangOpts.OpenMP)
@@ -190,6 +193,18 @@ void CodeGenModule::createObjCRuntime() {
     return;
   }
   llvm_unreachable("bad runtime kind");
+}
+
+void CodeGenModule::createObjCSRuntime() {
+  switch (LangOpts.ObjCRuntime.getKind()) {
+    case ObjCRuntime::FragileMacOSX:
+    case ObjCRuntime::MacOSX:
+    case ObjCRuntime::iOS:
+      ObjCSRuntime = CreateMobileSubstrateObjCSRuntime(*this);
+      return;
+    default:
+      llvm_unreachable("bad runtime kind");
+  }
 }
 
 void CodeGenModule::createOpenCLRuntime() {
@@ -3334,11 +3349,20 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
             OMD->getClassInterface()), OMD->getLocation());
     break;
   }
+  case Decl::ObjCHook: {
+    // TODO: Generate constructor for method hooks
+    break;
+  }
   case Decl::ObjCMethod: {
     auto *OMD = cast<ObjCMethodDecl>(D);
     // If this is not a prototype, emit the body.
-    if (OMD->getBody())
-      CodeGenFunction(*this).GenerateObjCMethod(OMD);
+    if (OMD->getBody()) {
+      if (isa<ObjCHookDecl>(OMD->getDeclContext())) {
+        CodeGenFunction(*this).GenerateObjCSMethodHook(OMD, cast<ObjCHookDecl>(OMD->getDeclContext()));
+      } else {
+        CodeGenFunction(*this).GenerateObjCMethod(OMD);
+      }
+    }
     break;
   }
   case Decl::ObjCCompatibleAlias:

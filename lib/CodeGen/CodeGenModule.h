@@ -85,6 +85,7 @@ class CodeGenTBAA;
 class CGCXXABI;
 class CGDebugInfo;
 class CGObjCRuntime;
+class CGObjCSRuntime;
 class CGOpenCLRuntime;
 class CGOpenMPRuntime;
 class CGCUDARuntime;
@@ -303,6 +304,7 @@ private:
   CodeGenVTables VTables;
 
   CGObjCRuntime* ObjCRuntime;
+  CGObjCSRuntime* ObjCSRuntime;
   CGOpenCLRuntime* OpenCLRuntime;
   CGOpenMPRuntime* OpenMPRuntime;
   CGCUDARuntime* CUDARuntime;
@@ -452,6 +454,7 @@ private:
 
   /// Lazily create the Objective-C runtime
   void createObjCRuntime();
+  void createObjCSRuntime();
 
   void createOpenCLRuntime();
   void createOpenMPRuntime();
@@ -515,6 +518,12 @@ public:
 
   /// Return true iff an Objective-C runtime has been configured.
   bool hasObjCRuntime() { return !!ObjCRuntime; }
+
+  // Return a reference to the configured Objective-CS runtime.
+  CGObjCSRuntime &getObjCSRuntime() {
+    if (!ObjCSRuntime) createObjCSRuntime();
+    return *ObjCSRuntime;
+  }
 
   /// Return a reference to the configured OpenCL runtime.
   CGOpenCLRuntime &getOpenCLRuntime() {
