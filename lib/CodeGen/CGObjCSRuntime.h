@@ -13,6 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <vector>
+
 namespace llvm {
   class Function;
 }
@@ -37,6 +39,11 @@ public:
   virtual void GenerateMethodHook(CodeGenFunction &CGF,
                                   const ObjCMethodDecl *OMD,
                                   const ObjCHookDecl *HD) = 0;
+
+  virtual void GenerateHookConstructor(CodeGenFunction &CGF, 
+                                       ObjCHookDecl *HD) = 0;
+                                       
+  std::vector<llvm::Function*> HookConstructors;
 };
 
 CGObjCSRuntime *CreateMobileSubstrateObjCSRuntime(CodeGenModule &CGM);

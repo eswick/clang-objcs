@@ -23,4 +23,9 @@ void CodeGenFunction::GenerateObjCSMethodHook(const ObjCMethodDecl *OMD,
   CGM.getObjCSRuntime().GenerateMethodHook(*this, OMD, HD);
 }
 
+void CodeGenFunction::GenerateObjCSHookConstructor(ObjCHookDecl *HD) {
+  CGM.getObjCSRuntime().GenerateHookConstructor(*this, HD);
+}
+
+
 CGObjCSRuntime::~CGObjCSRuntime() { }

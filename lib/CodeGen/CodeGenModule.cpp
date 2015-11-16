@@ -360,6 +360,12 @@ void CodeGenModule::Release() {
   EmitCXXGlobalInitFunc();
   EmitCXXGlobalDtorFunc();
   EmitCXXThreadLocalInitFunc();
+  if (ObjCSRuntime)
+    for (std::vector<llvm::Function*>::const_iterator 
+         i = ObjCSRuntime->HookConstructors.begin(); 
+         i != ObjCSRuntime->HookConstructors.end();
+         ++i)
+      AddGlobalCtor(*i);
   if (ObjCRuntime)
     if (llvm::Function *ObjCInitFunction = ObjCRuntime->ModuleInitFunction())
       AddGlobalCtor(ObjCInitFunction);
@@ -3350,7 +3356,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     break;
   }
   case Decl::ObjCHook: {
-    // TODO: Generate constructor for method hooks
+    CodeGenFunction(*this).GenerateObjCSHookConstructor(cast<ObjCHookDecl>(D));
     break;
   }
   case Decl::ObjCMethod: {

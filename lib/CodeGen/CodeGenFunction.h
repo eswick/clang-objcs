@@ -1211,6 +1211,7 @@ public:
   //===--------------------------------------------------------------------===//
   
   void GenerateObjCSMethodHook(const ObjCMethodDecl *OMD, const ObjCHookDecl *HD);
+  void GenerateObjCSHookConstructor(ObjCHookDecl *HD);
 
   //===--------------------------------------------------------------------===//
   //                                  Block Bits
