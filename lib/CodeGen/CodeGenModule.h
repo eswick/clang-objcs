@@ -292,14 +292,14 @@ private:
   llvm::LLVMContext &VMContext;
 
   CodeGenTBAA *TBAA;
-  
+
   mutable const TargetCodeGenInfo *TheTargetCodeGenInfo;
-  
+
   // This should not be moved earlier, since its initialization depends on some
   // of the previous reference members being already initialized and also checks
   // if TheTargetCodeGenInfo is NULL
   CodeGenTypes Types;
- 
+
   /// Holds information about C++ vtables.
   CodeGenVTables VTables;
 
@@ -409,7 +409,7 @@ private:
   /// order. Once the decl is emitted, the index is replaced with ~0U to ensure
   /// that we don't re-emit the initializer.
   llvm::DenseMap<const Decl*, unsigned> DelayedCXXInitPosition;
-  
+
   typedef std::pair<OrderGlobalInits, llvm::Function*> GlobalInitData;
 
   struct GlobalInitPriorityCmp {
@@ -445,11 +445,11 @@ private:
 
   /// \brief The LLVM type corresponding to NSConstantString.
   llvm::StructType *NSConstantStringType;
-  
+
   /// \brief The type used to describe the state of a fast enumeration in
   /// Objective-C's for..in loop.
   QualType ObjCFastEnumerationStateType;
-  
+
   /// @}
 
   /// Lazily create the Objective-C runtime
@@ -563,7 +563,7 @@ public:
   llvm::Constant *getStaticLocalDeclAddress(const VarDecl *D) {
     return StaticLocalDeclMap[D];
   }
-  void setStaticLocalDeclAddress(const VarDecl *D, 
+  void setStaticLocalDeclAddress(const VarDecl *D,
                                  llvm::Constant *C) {
     StaticLocalDeclMap[D] = C;
   }
@@ -575,7 +575,7 @@ public:
   llvm::GlobalVariable *getStaticLocalDeclGuardAddress(const VarDecl *D) {
     return StaticLocalDeclGuardMap[D];
   }
-  void setStaticLocalDeclGuardAddress(const VarDecl *D, 
+  void setStaticLocalDeclGuardAddress(const VarDecl *D,
                                       llvm::GlobalVariable *C) {
     StaticLocalDeclGuardMap[D] = C;
   }
@@ -634,10 +634,10 @@ public:
 
   bool shouldUseTBAA() const { return TBAA != nullptr; }
 
-  const TargetCodeGenInfo &getTargetCodeGenInfo(); 
-  
+  const TargetCodeGenInfo &getTargetCodeGenInfo();
+
   CodeGenTypes &getTypes() { return Types; }
- 
+
   CodeGenVTables &getVTables() { return VTables; }
 
   ItaniumVTableContext &getItaniumVTableContext() {
@@ -796,7 +796,7 @@ public:
 
   /// Fetches the global unique block count.
   int getUniqueBlockCount() { return ++Block.GlobalUniqueCount; }
-  
+
   /// Fetches the type of a generic block descriptor.
   llvm::Type *getBlockDescriptorType();
 
@@ -805,7 +805,7 @@ public:
 
   /// Gets the address of a block which requires no captures.
   llvm::Constant *GetAddrOfGlobalBlock(const BlockExpr *BE, const char *);
-  
+
   /// Return a pointer to a constant CFString object for the given string.
   llvm::Constant *GetAddrOfConstantCFString(const StringLiteral *Literal);
 
@@ -1052,7 +1052,7 @@ public:
 
   /// Return the store size, in character units, of the given LLVM type.
   CharUnits GetTargetTypeStoreSize(llvm::Type *Ty) const;
-  
+
   /// Returns LLVM linkage for a declarator.
   llvm::GlobalValue::LinkageTypes
   getLLVMLinkageForDeclarator(const DeclaratorDecl *D, GVALinkage Linkage,
@@ -1176,7 +1176,7 @@ private:
   void EmitAliasDefinition(GlobalDecl GD);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
   void EmitObjCIvarInitializations(ObjCImplementationDecl *D);
-  
+
   // C++ related functions.
 
   void EmitNamespace(const NamespaceDecl *D);

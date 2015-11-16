@@ -35,14 +35,14 @@ private:
   }
 
   llvm::Function* getMethodDefinition(const ObjCMethodDecl *OMD) {
-    llvm::DenseMap<const ObjCMethodDecl*, 
+    llvm::DenseMap<const ObjCMethodDecl*,
                    llvm::Function*>::iterator I = MethodDefinitions.find(OMD);
     if (I != MethodDefinitions.end())
       return I->second;
 
     return NULL;
   }
-  
+
   /// Create the mangled  name for a method hook
   ///
   /// methodhook$<class>$<selector>
@@ -50,19 +50,19 @@ private:
   /// Semicolons (:) in selector are replaced with '$'
   void getMangledNameForMethodHook(const ObjCMethodDecl *D, SmallVectorImpl<char> &Name) {
       llvm::raw_svector_ostream OS(Name);
-      
+
       std::string sel = D->getSelector().getAsString();
       std::replace(sel.begin(), sel.end(), ':', '$');
-      
+
       OS << "methodhook$" << D->getClassInterface()->getName() << "$" << sel;
-  } 
+  }
 
   llvm::Function* StartHookConstructor(CodeGenFunction &CGF) {
     FunctionArgList args; // Arguments for the ctor (there are none)
 
     llvm::FunctionType *MethodTy = llvm::FunctionType::get(CGF.VoidTy, false);
-    llvm::Function *Fn = llvm::Function::Create(MethodTy, 
-                                             llvm::GlobalValue::InternalLinkage, 
+    llvm::Function *Fn = llvm::Function::Create(MethodTy,
+                                             llvm::GlobalValue::InternalLinkage,
                                              StringRef("objcsHookInit"),
                                              &CGM.getModule());
 
@@ -73,7 +73,7 @@ private:
     llvm::BasicBlock *EntryBB = CGF.createBasicBlock("entry", Fn);
 
     llvm::Value *Undef = llvm::UndefValue::get(CGF.Int32Ty);
-    CGF.AllocaInsertPt = new llvm::BitCastInst(Undef, CGF.Int32Ty, 
+    CGF.AllocaInsertPt = new llvm::BitCastInst(Undef, CGF.Int32Ty,
                                                "", EntryBB);
     if (CGF.Builder.isNamePreserving())
       CGF.AllocaInsertPt->setName("allocapt");
@@ -91,17 +91,17 @@ private:
 
     return Fn;
   }
-  
+
   llvm::CallInst* EmitGetClassRuntimeCall(CodeGenFunction &CGF,
                                           std::string className) {
     llvm::Type *objc_getClassArgTypes[] = { CGF.Int8PtrTy };
-    llvm::FunctionType *objc_getClassType = 
-                                  llvm::FunctionType::get(CGF.Int8PtrTy, 
-                                                          objc_getClassArgTypes, 
+    llvm::FunctionType *objc_getClassType =
+                                  llvm::FunctionType::get(CGF.Int8PtrTy,
+                                                          objc_getClassArgTypes,
                                                           false);
 
-    llvm::Constant *objc_getClassFn = 
-                                    CGM.CreateRuntimeFunction(objc_getClassType, 
+    llvm::Constant *objc_getClassFn =
+                                    CGM.CreateRuntimeFunction(objc_getClassType,
                                                               "objc_getClass");
 
     if (llvm::Function *f = dyn_cast<llvm::Function>(objc_getClassFn)) {
@@ -111,7 +111,7 @@ private:
     llvm::Constant *classString = CGM.GetAddrOfConstantCString(className);
 
     llvm::Value *objc_getClassArgs[1];
-    objc_getClassArgs[0] = llvm::ConstantExpr::getBitCast(classString, 
+    objc_getClassArgs[0] = llvm::ConstantExpr::getBitCast(classString,
                                                           CGF.Int8PtrTy);
 
     return CGF.EmitNounwindRuntimeCall(objc_getClassFn, objc_getClassArgs);
@@ -120,13 +120,13 @@ private:
   llvm::CallInst* EmitGetMetaclassRuntimeCall(CodeGenFunction &CGF,
                                               llvm::CallInst *clazz) {
     llvm::Type *object_getClassArgTypes[] = { CGF.Int8PtrTy };
-    llvm::FunctionType *object_getClassType = 
-                                llvm::FunctionType::get(CGF.Int8PtrTy, 
-                                                        object_getClassArgTypes, 
+    llvm::FunctionType *object_getClassType =
+                                llvm::FunctionType::get(CGF.Int8PtrTy,
+                                                        object_getClassArgTypes,
                                                         false);
 
     llvm::Constant *object_getClassFn =
-                                  CGM.CreateRuntimeFunction(object_getClassType, 
+                                  CGM.CreateRuntimeFunction(object_getClassType,
                                                             "object_getClass");
 
     if (llvm::Function *f = dyn_cast<llvm::Function>(object_getClassFn)) {
@@ -138,27 +138,27 @@ private:
 
     return CGF.EmitNounwindRuntimeCall(object_getClassFn, object_getClassArgs);
   }
-  
+
 /// Emits a call to MSHookMessageEx with the given class, message, and hook.
 /// old should be a pointer to a function pointer that will point to the
 /// original method after the hook is complete.
 
   void EmitMessageHookExRuntimeCall(CodeGenFunction &CGF,
-                                    llvm::CallInst *_class, 
-                                    llvm::Value *message, 
-                                    llvm::Function* hook, 
+                                    llvm::CallInst *_class,
+                                    llvm::Value *message,
+                                    llvm::Function* hook,
                                     llvm::Value *old) {
 
     llvm::Type *Int8PtrTy = CGF.Int8PtrTy;
 
-    llvm::Type *msgHookExArgTypes[] = { Int8PtrTy, Int8PtrTy, 
+    llvm::Type *msgHookExArgTypes[] = { Int8PtrTy, Int8PtrTy,
                                         Int8PtrTy, Int8PtrTy };
-    llvm::FunctionType *msgHookExType = 
-                                llvm::FunctionType::get(CGF.Builder.getVoidTy(), 
-                                                        msgHookExArgTypes, 
+    llvm::FunctionType *msgHookExType =
+                                llvm::FunctionType::get(CGF.Builder.getVoidTy(),
+                                                        msgHookExArgTypes,
                                                         false);
 
-    llvm::Constant *msHookMsgExFn = CGM.CreateRuntimeFunction(msgHookExType, 
+    llvm::Constant *msHookMsgExFn = CGM.CreateRuntimeFunction(msgHookExType,
                                                              "MSHookMessageEx");
 
     if (llvm::Function *f = dyn_cast<llvm::Function>(msHookMsgExFn)) {
@@ -176,7 +176,7 @@ private:
 
 public:
   CGObjCSMS(CodeGen::CodeGenModule &cgm) : CGObjCSRuntime(cgm) { }
-  
+
   void GenerateMethodHook(CodeGenFunction &CGF,
                           const ObjCMethodDecl *OMD,
                           const ObjCHookDecl *HD) override {
@@ -185,27 +185,27 @@ public:
 
     // Set up LLVM types
     CodeGenTypes &Types = CGF.getTypes();
-    
+
     llvm::FunctionType *MethodTy = Types.GetFunctionType(
                                        Types.arrangeObjCMethodDeclaration(OMD));
-    llvm::Function *Fn = llvm::Function::Create(MethodTy, 
-                                            llvm::GlobalValue::InternalLinkage, 
+    llvm::Function *Fn = llvm::Function::Create(MethodTy,
+                                            llvm::GlobalValue::InternalLinkage,
                                             Name.str(),
                                             &CGM.getModule());
-    
+
     const CGFunctionInfo &FI = Types.arrangeObjCMethodDeclaration(OMD);
     CGM.SetInternalFunctionAttributes(OMD, Fn, FI);
-    
-    
+
+
     // Create function args (self, _cmd, ...)
     FunctionArgList args;
     args.push_back(OMD->getSelfDecl());
     args.push_back(OMD->getCmdDecl());
-    
+
     args.append(OMD->param_begin(), OMD->param_end());
-    
+
     CGF.CurGD = OMD;
-    
+
     // Emit method
     CGF.StartFunction(OMD, OMD->getReturnType(), Fn, FI, args, OMD->getLocStart());
     CGF.EmitCompoundStmtWithoutScope(*cast<CompoundStmt>(OMD->getBody()));
@@ -214,19 +214,19 @@ public:
     setMethodDefinition(OMD, Fn);
   }
 
-  void GenerateHookConstructor(CodeGenFunction &CGF, 
+  void GenerateHookConstructor(CodeGenFunction &CGF,
                                ObjCHookDecl *HD) override {
     CGF.disableDebugInfo();
-    
+
     llvm::Function *Fn = StartHookConstructor(CGF);
 
     llvm::CallInst *clazz = EmitGetClassRuntimeCall(
                                     CGF,
                                     HD->getClassInterface()->getNameAsString());
-    
+
     llvm::CallInst *metaclass = EmitGetMetaclassRuntimeCall(CGF, clazz);
 
-    for (ObjCContainerDecl::method_iterator M = 
+    for (ObjCContainerDecl::method_iterator M =
           HD->meth_begin(), MEnd = HD->meth_end(); M != MEnd; ++M) {
 
        ObjCMethodDecl *OMD = *M;
@@ -236,19 +236,19 @@ public:
        EmitMessageHookExRuntimeCall(
                               CGF,
                               OMD->isInstanceMethod() ? clazz : metaclass,
-                              selector, 
-                              getMethodDefinition(OMD), 
+                              selector,
+                              getMethodDefinition(OMD),
                               // TODO: Store old somewhere for use by @orig
-                              CGM.EmitNullConstant(CGF.getContext().VoidPtrTy));  
+                              CGM.EmitNullConstant(CGF.getContext().VoidPtrTy));
     }
 
     CGF.FinishFunction(SourceLocation());
 
     HookConstructors.push_back(Fn);
-    
+
     CGF.enableDebugInfo();
   }
-  
+
 };
 }
 

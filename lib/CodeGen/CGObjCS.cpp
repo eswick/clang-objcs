@@ -18,7 +18,7 @@
 using namespace clang;
 using namespace CodeGen;
 
-void CodeGenFunction::GenerateObjCSMethodHook(const ObjCMethodDecl *OMD, 
+void CodeGenFunction::GenerateObjCSMethodHook(const ObjCMethodDecl *OMD,
                                               const ObjCHookDecl *HD) {
   CGM.getObjCSRuntime().GenerateMethodHook(*this, OMD, HD);
 }

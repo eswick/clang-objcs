@@ -20,19 +20,19 @@ namespace llvm {
 }
 
 namespace clang {
-  
+
   class ObjCMethodDecl;
   class ObjCHookDecl;
-  
+
 namespace CodeGen {
   class CodeGenFunction;
   class CodeGenModule;
-  
+
 class CGObjCSRuntime {
 protected:
   CodeGen::CodeGenModule &CGM;
   CGObjCSRuntime(CodeGen::CodeGenModule &CGM) : CGM(CGM) {}
-  
+
 public:
   virtual ~CGObjCSRuntime();
   
@@ -40,9 +40,9 @@ public:
                                   const ObjCMethodDecl *OMD,
                                   const ObjCHookDecl *HD) = 0;
 
-  virtual void GenerateHookConstructor(CodeGenFunction &CGF, 
+  virtual void GenerateHookConstructor(CodeGenFunction &CGF,
                                        ObjCHookDecl *HD) = 0;
-                                       
+
   std::vector<llvm::Function*> HookConstructors;
 };
 
