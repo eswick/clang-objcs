@@ -7322,7 +7322,7 @@ public:
     ObjCArgInfo *ArgInfo,
     DeclaratorChunk::ParamInfo *CParamInfo, unsigned CNumArgs, // c-style args
     AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind,
-    bool isVariadic, bool MethodDefinition);
+    bool isVariadic, bool MethodDefinition, bool isNew);
 
   ObjCMethodDecl *LookupMethodInQualifiedType(Selector Sel,
                                               const ObjCObjectPointerType *OPT,

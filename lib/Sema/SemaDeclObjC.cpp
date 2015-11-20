@@ -4164,7 +4164,7 @@ Decl *Sema::ActOnMethodDeclaration(
     ObjCArgInfo *ArgInfo,
     DeclaratorChunk::ParamInfo *CParamInfo, unsigned CNumArgs, // c-style args
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind,
-    bool isVariadic, bool MethodDefinition) {
+    bool isVariadic, bool MethodDefinition, bool IsNew) {
   // Make sure we can establish a context for the method.
   if (!CurContext->isObjCContainer()) {
     Diag(MethodLoc, diag::error_missing_method_context);
@@ -4198,7 +4198,7 @@ Decl *Sema::ActOnMethodDeclaration(
       /*isImplicitlyDeclared=*/false, /*isDefined=*/false,
       MethodDeclKind == tok::objc_optional ? ObjCMethodDecl::Optional
                                            : ObjCMethodDecl::Required,
-      HasRelatedResultType);
+      HasRelatedResultType, IsNew);
 
   SmallVector<ParmVarDecl*, 16> Params;
 

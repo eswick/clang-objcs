@@ -122,6 +122,8 @@ private:
   /// instance (true) or class (false) method.
   unsigned IsInstance : 1;
   unsigned IsVariadic : 1;
+  
+  unsigned IsNew : 1;
 
   /// True if this method is the getter or setter for an explicit property.
   unsigned IsPropertyAccessor : 1;
@@ -229,10 +231,11 @@ private:
                  bool isVariadic = false, bool isPropertyAccessor = false,
                  bool isImplicitlyDeclared = false, bool isDefined = false,
                  ImplementationControl impControl = None,
-                 bool HasRelatedResultType = false)
+                 bool HasRelatedResultType = false,
+                 bool isNew = false)
       : NamedDecl(ObjCMethod, contextDecl, beginLoc, SelInfo),
         DeclContext(ObjCMethod), Family(InvalidObjCMethodFamily),
-        IsInstance(isInstance), IsVariadic(isVariadic),
+        IsInstance(isInstance), IsVariadic(isVariadic), IsNew(isNew),
         IsPropertyAccessor(isPropertyAccessor), IsDefined(isDefined),
         IsRedeclaration(0), HasRedeclaration(0), DeclImplementation(impControl),
         objcDeclQualifier(OBJC_TQ_None),
@@ -257,7 +260,8 @@ public:
          bool isVariadic = false, bool isPropertyAccessor = false,
          bool isImplicitlyDeclared = false, bool isDefined = false,
          ImplementationControl impControl = None,
-         bool HasRelatedResultType = false);
+         bool HasRelatedResultType = false,
+         bool isNew = false);
 
   static ObjCMethodDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
@@ -428,6 +432,8 @@ public:
 
   bool isDefined() const { return IsDefined; }
   void setDefined(bool isDefined) { IsDefined = isDefined; }
+
+  bool isNewMethod() const { return IsNew; }
 
   /// \brief Whether this method overrides any other in the class hierarchy.
   ///

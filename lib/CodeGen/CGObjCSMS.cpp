@@ -198,6 +198,40 @@ private:
 
     CGF.EmitRuntimeCallOrInvoke(msHookMsgExFn, msHookMsgExArgs);
   }
+  
+  void EmitNewMethod(CodeGenFunction &CGF, llvm::CallInst *_class,
+                     llvm::Value *selector, llvm::Function *impl,
+                     ObjCMethodDecl *OMD) {
+
+    // Generate string constant for method type encoding
+    std::string TypeStr;
+    CGF.getContext().getObjCEncodingForMethodDecl(OMD, TypeStr);
+    llvm::Constant *typeEncoding = CGM.GetAddrOfConstantCString(TypeStr);
+    
+    llvm::Type *Int8PtrTy = CGF.Int8PtrTy;
+    
+    llvm::Type *classAddMethodArgTypes[] = { Int8PtrTy, Int8PtrTy, 
+                                             Int8PtrTy, Int8PtrTy };
+    llvm::FunctionType *classAddMethodType = llvm::FunctionType::get(
+                                                        CGF.Builder.getVoidTy(),
+                                                        classAddMethodArgTypes,
+                                                        false);
+    llvm::Constant *classAddMethodFn = CGM.CreateRuntimeFunction(
+                                                            classAddMethodType,
+                                                            "class_addMethod");
+
+    if (llvm::Function *f = dyn_cast<llvm::Function>(classAddMethodFn)) {
+      f->setLinkage(llvm::Function::ExternalWeakLinkage);
+    }
+    
+    llvm::Value *classAddMethodArgs[4];
+    classAddMethodArgs[0] = CGF.Builder.CreateBitCast(_class, Int8PtrTy);
+    classAddMethodArgs[1] = CGF.Builder.CreateBitCast(selector, Int8PtrTy);
+    classAddMethodArgs[2] = CGF.Builder.CreateBitCast(impl, Int8PtrTy);
+    classAddMethodArgs[3] = CGF.Builder.CreateBitCast(typeEncoding, Int8PtrTy);
+    
+    CGF.EmitRuntimeCallOrInvoke(classAddMethodFn, classAddMethodArgs);
+  }
 
 public:
   CGObjCSMS(CodeGen::CodeGenModule &cgm) : CGObjCSRuntime(cgm) { }
@@ -272,6 +306,20 @@ public:
        ObjCMethodDecl *OMD = *M;
 
        llvm::Value *selector = CGM.getObjCRuntime().GetSelector(CGF, OMD);
+
+       ObjCInterfaceDecl *CDecl = HD->getClassInterface();
+       ObjCMethodDecl *mDecl = CDecl->lookupMethod(OMD->getSelector(),
+                                                   OMD->isInstanceMethod());
+
+       if (CDecl && mDecl) {
+         if (mDecl->isNewMethod()) {
+           EmitNewMethod(CGF,
+                         OMD->isInstanceMethod() ? clazz : metaclass,
+                         selector,
+                         getMethodDefinition(OMD), OMD);
+           continue;
+         }
+       }
 
        EmitMessageHookExRuntimeCall(
                               CGF,

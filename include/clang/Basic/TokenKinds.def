@@ -652,6 +652,7 @@ OBJC2_AT_KEYWORD(import)
 
 OBJCS_AT_KEYWORD(hook)
 OBJCS_AT_KEYWORD(orig)
+OBJCS_AT_KEYWORD(new)
 
 // TODO: What to do about context-sensitive keywords like:
 //       bycopy/byref/in/inout/oneway/out?

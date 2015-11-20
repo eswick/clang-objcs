@@ -630,6 +630,7 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
   SmallVector<Decl *, 16> allProperties;
   SmallVector<DeclGroupPtrTy, 8> allTUVariables;
   tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword;
+  bool MethodIsNew = false;
 
   SourceRange AtEnd;
     
@@ -637,7 +638,7 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
     // If this is a method prototype, parse it.
     if (Tok.isOneOf(tok::minus, tok::plus)) {
       if (Decl *methodPrototype =
-          ParseObjCMethodPrototype(MethodImplKind, false))
+          ParseObjCMethodPrototype(MethodImplKind, false, MethodIsNew))
         allMethods.push_back(methodPrototype);
       // Consume the ';' here, since ParseObjCMethodPrototype() is re-used for
       // method definitions.
@@ -653,7 +654,7 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
       Diag(Tok, diag::err_expected_minus_or_plus);
       ParseObjCMethodDecl(Tok.getLocation(), 
                           tok::minus, 
-                          MethodImplKind, false);
+                          MethodImplKind, false, MethodIsNew);
       continue;
     }
     // Ignore excess semicolons.
@@ -737,7 +738,18 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
       else
         MethodImplKind = DirectiveKind;
       break;
-
+      
+    case tok::objc_new:
+      if (!getLangOpts().ObjCS)
+        Diag(AtLoc, diag::err_objc_new_require_objcs);
+    
+      if (contextKey == tok::objc_interface || isa<ObjCCategoryDecl>(CDecl)) {
+        MethodIsNew = true;
+      } else {
+        Diag(AtLoc, diag::err_objc_directive_only_in_interface_or_category);
+      }
+      
+      break;
     case tok::objc_property:
       if (!getLangOpts().ObjC2)
         Diag(AtLoc, diag::err_objc_properties_require_objc2);
@@ -1006,13 +1018,14 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
 ///     __attribute__((deprecated))
 ///
 Decl *Parser::ParseObjCMethodPrototype(tok::ObjCKeywordKind MethodImplKind,
-                                       bool MethodDefinition) {
+                                       bool MethodDefinition,
+                                       bool IsNew) {
   assert(Tok.isOneOf(tok::minus, tok::plus) && "expected +/-");
 
   tok::TokenKind methodType = Tok.getKind();
   SourceLocation mLoc = ConsumeToken();
   Decl *MDecl = ParseObjCMethodDecl(mLoc, methodType, MethodImplKind,
-                                    MethodDefinition);
+                                    MethodDefinition, IsNew);
   // Since this rule is used for both method declarations and definitions,
   // the caller is (optionally) responsible for consuming the ';'.
   return MDecl;
@@ -1356,7 +1369,8 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
 Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                   tok::TokenKind mType,
                                   tok::ObjCKeywordKind MethodImplKind,
-                                  bool MethodDefinition) {
+                                  bool MethodDefinition,
+                                  bool IsNew) {
   ParsingDeclRAIIObject PD(*this, ParsingDeclRAIIObject::NoParent);
 
   if (Tok.is(tok::code_completion)) {
@@ -1411,7 +1425,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                           selLoc, Sel, nullptr,
                                           CParamInfo.data(), CParamInfo.size(),
                                           methodAttrs.getList(), MethodImplKind,
-                                          false, MethodDefinition);
+                                          false, MethodDefinition, IsNew);
     PD.complete(Result);
     return Result;
   }
@@ -1541,7 +1555,8 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                         KeyLocs, Sel, &ArgInfos[0], 
                                         CParamInfo.data(), CParamInfo.size(),
                                         methodAttrs.getList(),
-                                        MethodImplKind, isVariadic, MethodDefinition);
+                                        MethodImplKind, isVariadic, MethodDefinition,
+                                        IsNew);
   
   PD.complete(Result);
   return Result;

@@ -1363,10 +1363,12 @@ private:
   void ParseObjCMethodRequirement();
   Decl *ParseObjCMethodPrototype(
             tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword,
-            bool MethodDefinition = true);
+            bool MethodDefinition = true,
+            bool IsNew = false);
   Decl *ParseObjCMethodDecl(SourceLocation mLoc, tok::TokenKind mType,
             tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword,
-            bool MethodDefinition=true);
+            bool MethodDefinition=true,
+            bool IsNew = false);
   void ParseObjCPropertyAttribute(ObjCDeclSpec &DS);
 
   Decl *ParseObjCMethodDefinition();
