@@ -42,6 +42,21 @@ private:
 
     return NULL;
   }
+  
+  llvm::DenseMap<const ObjCMethodDecl*, llvm::GlobalVariable*> OrigPointers;
+  
+  void setOrigPointer(const ObjCMethodDecl *OMD, llvm::GlobalVariable *Fn) {
+    OrigPointers.insert(std::make_pair(OMD, Fn));
+  }
+
+  llvm::GlobalVariable* getOrigPointer(const ObjCMethodDecl *OMD) {
+    llvm::DenseMap<const ObjCMethodDecl*, llvm::GlobalVariable*>::iterator I = 
+                                                       OrigPointers.find(OMD);
+    if (I != OrigPointers.end())
+      return I->second;
+
+    return NULL;
+  }
 
   /// Create the mangled  name for a method hook
   ///
@@ -55,6 +70,16 @@ private:
       std::replace(sel.begin(), sel.end(), ':', '$');
 
       OS << "methodhook$" << D->getClassInterface()->getName() << "$" << sel;
+  }
+  
+  void getMangledNameForOrigPointer(const ObjCMethodDecl *D, 
+                                    SmallVectorImpl<char> &Name) {
+      llvm::raw_svector_ostream OS(Name);
+
+      std::string sel = D->getSelector().getAsString();
+      std::replace(sel.begin(), sel.end(), ':', '$');
+
+      OS << "origpointer$" << D->getClassInterface()->getName() << "$" << sel;
   }
 
   llvm::Function* StartHookConstructor(CodeGenFunction &CGF) {
@@ -180,7 +205,22 @@ public:
   void GenerateMethodHook(CodeGenFunction &CGF,
                           const ObjCMethodDecl *OMD,
                           const ObjCHookDecl *HD) override {
-                            SmallString<256> Name;
+    SmallString <256> OrigName;
+    getMangledNameForOrigPointer(OMD, OrigName);
+
+    llvm::GlobalVariable *Orig;
+
+    Orig = new llvm::GlobalVariable(
+      CGM.getModule(),
+      CGF.Int8PtrTy,
+      false,
+      llvm::GlobalValue::InternalLinkage,
+      CGM.EmitNullConstant(CGF.getContext().VoidPtrTy),
+      OrigName.str());
+
+    setOrigPointer(OMD, Orig);
+
+    SmallString<256> Name;
     getMangledNameForMethodHook(OMD, Name);
 
     // Set up LLVM types
@@ -238,8 +278,7 @@ public:
                               OMD->isInstanceMethod() ? clazz : metaclass,
                               selector,
                               getMethodDefinition(OMD),
-                              // TODO: Store old somewhere for use by @orig
-                              CGM.EmitNullConstant(CGF.getContext().VoidPtrTy));
+                              getOrigPointer(OMD));
     }
 
     CGF.FinishFunction(SourceLocation());
@@ -248,6 +287,40 @@ public:
 
     CGF.enableDebugInfo();
   }
+  
+  RValue GenerateOrigExpr(CodeGenFunction &CGF,
+                          const ObjCOrigExpr *E, 
+                          ReturnValueSlot Return) override {
+    CGObjCRuntime &Runtime = CGM.getObjCRuntime();
+    
+    ObjCMethodDecl *OMD = E->getMethodDecl();
+    
+    CallArgList Args;
+    
+    Args.add(RValue::get(CGF.LoadObjCSelf()), CGF.getContext().getObjCIdType());
+    Args.add(RValue::get(Runtime.GetSelector(CGF, OMD->getSelector())),
+                         CGF.getContext().getObjCSelType());
+    
+    for (ObjCOrigExpr::const_arg_iterator I = E->arg_begin(), S = E->arg_end(); 
+         I != S; ++I) {
+      Args.add(CGF.EmitAnyExpr(*I), I->getType());
+    }
+    
+    CGObjCRuntime::MessageSendInfo MSI =
+                Runtime.getMessageSendInfo(OMD,
+                                           OMD->getReturnType(), 
+                                           Args);
+    
+    assert(isa<ObjCHookDecl>(OMD->getDeclContext()) &&
+                                                      "@orig outside of @hook");
+    
+    // Load and call the original implementation  
+    llvm::Value *Fn = CGF.Builder.CreateLoad(getOrigPointer(OMD));
+    Fn = CGF.Builder.CreateBitCast(Fn, MSI.MessengerType);
+    RValue rvalue = CGF.EmitCall(MSI.CallInfo, Fn, Return, Args);
+    
+    return rvalue;
+}
 
 };
 }

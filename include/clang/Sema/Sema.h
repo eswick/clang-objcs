@@ -5041,6 +5041,9 @@ public:
   ExprResult BuildObjCEncodeExpression(SourceLocation AtLoc,
                                   TypeSourceInfo *EncodedTypeInfo,
                                   SourceLocation RParenLoc);
+  ExprResult BuildObjCOrigExpression(SourceLocation AtLoc,
+                                     ArrayRef<Expr *> Args,
+                                     SourceLocation RParenLoc);
   ExprResult BuildCXXMemberCallExpr(Expr *Exp, NamedDecl *FoundDecl,
                                     CXXConversionDecl *Method,
                                     bool HadMultipleCandidates);

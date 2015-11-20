@@ -354,6 +354,14 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
       return (kind == Cl::CL_PRValue) ? Cl::CL_ObjCMessageRValue : kind;
     }
     return Cl::CL_PRValue;
+  
+  case Expr::ObjCOrigExprClass:
+    if (const ObjCMethodDecl *Method =
+          cast<ObjCOrigExpr>(E)->getMethodDecl()) {
+      Cl::Kinds kind = ClassifyUnnamed(Ctx, Method->getReturnType());
+      return (kind == Cl::CL_PRValue) ? Cl::CL_ObjCMessageRValue : kind;
+    }
+    return Cl::CL_PRValue;
       
     // Some C++ expressions are always class temporaries.
   case Expr::CXXConstructExprClass:

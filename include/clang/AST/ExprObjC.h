@@ -1365,6 +1365,91 @@ public:
   friend class ASTStmtWriter;
 };
 
+/// ObjCOrigExpr, used for \@orig in Objectie-CS. \@orig has the same type
+/// as the return type of the Objective-CS method hook it is used in.
+class ObjCOrigExpr : public Expr {
+  
+  enum { NumArgsBitWidth = 16 };
+
+  /// \brief The number of arguments in the message send, not
+  /// including the receiver.
+  unsigned NumArgs : NumArgsBitWidth;
+  
+  void setNumArgs(unsigned Num) {
+    assert((Num >> NumArgsBitWidth) == 0 && "Num of args is out of range!");
+    NumArgs = Num;
+  }
+  
+  SourceLocation AtLoc, LParenLoc, RParenLoc;
+  ObjCMethodDecl *OMD;
+  
+public:
+  ObjCOrigExpr(ObjCMethodDecl *OMD, ArrayRef<Expr *> Args, 
+               SourceLocation at, SourceLocation rp);
+
+  explicit ObjCOrigExpr(EmptyShell Empty) : Expr(ObjCOrigExprClass, Empty) {}
+
+  static ObjCOrigExpr *Create(const ASTContext &Context,
+                              ObjCMethodDecl *OMD,
+                              ArrayRef<Expr *>Args,
+                              SourceLocation at,
+                              SourceLocation rp);
+
+  SourceLocation getAtLoc() const { return AtLoc; }
+  void setAtLoc(SourceLocation L) { AtLoc = L; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
+  
+  unsigned getNumArgs() const { return NumArgs; }
+
+  /// \brief Retrieve the arguments to this message, not including the
+  /// receiver.
+  Expr **getArgs() {
+    return reinterpret_cast<Expr **>(this + 1) + 1;
+  }
+  const Expr * const *getArgs() const {
+    return reinterpret_cast<const Expr * const *>(this + 1) + 1;
+  }
+
+  Expr *getArg(unsigned Arg) {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    return cast<Expr>(getArgs()[Arg]);
+  }
+  const Expr *getArg(unsigned Arg) const {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    return cast<Expr>(getArgs()[Arg]);
+  }
+  void setArg(unsigned Arg, Expr *ArgExpr) {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    getArgs()[Arg] = ArgExpr;
+  }
+
+  child_range children();
+
+  typedef ExprIterator arg_iterator;
+  typedef ConstExprIterator const_arg_iterator;
+
+  arg_iterator arg_begin() { return reinterpret_cast<Stmt **>(getArgs()); }
+  arg_iterator arg_end()   { 
+    return reinterpret_cast<Stmt **>(getArgs() + NumArgs); 
+  }
+  const_arg_iterator arg_begin() const { 
+    return reinterpret_cast<Stmt const * const*>(getArgs()); 
+  }
+  const_arg_iterator arg_end() const { 
+    return reinterpret_cast<Stmt const * const*>(getArgs() + NumArgs); 
+  }
+  
+  SourceLocation getLocStart() const LLVM_READONLY { return AtLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  
+  ObjCMethodDecl *getMethodDecl() const LLVM_READONLY { return OMD; }
+  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjCOrigExprClass;
+  }
+};
+
 /// ObjCIsaExpr - Represent X->isa and X.isa when X is an ObjC 'id' type.
 /// (similar in spirit to MemberExpr).
 class ObjCIsaExpr : public Expr {

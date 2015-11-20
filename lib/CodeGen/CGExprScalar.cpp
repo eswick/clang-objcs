@@ -288,6 +288,13 @@ public:
       return EmitLoadOfLValue(E);
     return CGF.EmitObjCMessageExpr(E).getScalarVal();
   }
+  
+  Value *VisitObjCOrigExpr(ObjCOrigExpr *E) {
+    if (E->getMethodDecl() &&
+        E->getMethodDecl()->getReturnType()->isReferenceType())
+      return EmitLoadOfLValue(E);
+    return CGF.EmitObjCSOrigExpr(E).getScalarVal();
+  }
 
   Value *VisitObjCIsaExpr(ObjCIsaExpr *E) {
     LValue LV = CGF.EmitObjCIsaExpr(E);

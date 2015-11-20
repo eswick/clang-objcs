@@ -1395,6 +1395,11 @@ void StmtProfiler::VisitObjCMessageExpr(const ObjCMessageExpr *S) {
   VisitDecl(S->getMethodDecl());
 }
 
+void StmtProfiler::VisitObjCOrigExpr(const ObjCOrigExpr *S) {
+    VisitExpr(S);
+    VisitDecl(S->getMethodDecl());
+}
+
 void StmtProfiler::VisitObjCIsaExpr(const ObjCIsaExpr *S) {
   VisitExpr(S);
   ID.AddBoolean(S->isArrow());

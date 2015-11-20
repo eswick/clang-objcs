@@ -10370,6 +10370,12 @@ TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformObjCOrigExpr(ObjCOrigExpr *E) {
+  return ExprError(); // FIXME: Implement properly
+}
+
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformObjCSelectorExpr(ObjCSelectorExpr *E) {
   return E;
 }

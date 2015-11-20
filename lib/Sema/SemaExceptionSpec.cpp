@@ -1029,6 +1029,7 @@ CanThrowResult Sema::canThrow(const Expr *E) {
     // ObjC message sends are like function calls, but never have exception
     // specs.
   case Expr::ObjCMessageExprClass:
+  case Expr::ObjCOrigExprClass:
   case Expr::ObjCPropertyRefExprClass:
   case Expr::ObjCSubscriptRefExprClass:
     return CT_Can;

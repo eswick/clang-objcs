@@ -2236,8 +2236,10 @@ enum CXCursorKind {
   /** \brief OpenMP cancel directive.
    */
   CXCursor_OMPCancelDirective             = 256,
+  
+  CXCursor_ObjCOrigExpr                  = 257,
 
-  CXCursor_LastStmt                    = CXCursor_OMPCancelDirective,
+  CXCursor_LastStmt                    = CXCursor_ObjCOrigExpr,
 
   /**
    * \brief Cursor that represents the translation unit itself.

@@ -27,5 +27,10 @@ void CodeGenFunction::GenerateObjCSHookConstructor(ObjCHookDecl *HD) {
   CGM.getObjCSRuntime().GenerateHookConstructor(*this, HD);
 }
 
+RValue CodeGenFunction::EmitObjCSOrigExpr(const ObjCOrigExpr *E,
+                                          ReturnValueSlot Return) {
+  return CGM.getObjCSRuntime().GenerateOrigExpr(*this, E, Return);
+}
+
 
 CGObjCSRuntime::~CGObjCSRuntime() { }

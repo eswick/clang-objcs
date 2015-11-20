@@ -1083,6 +1083,13 @@ void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
     Locs[I] = ReadSourceLocation(Record, Idx);
 }
 
+void ASTStmtReader::VisitObjCOrigExpr(ObjCOrigExpr *E) {
+  VisitExpr(E);
+  E->setAtLoc(ReadSourceLocation(Record, Idx));
+  E->setRParenLoc(ReadSourceLocation(Record, Idx));
+  // FIXME: What about Args?
+}
+
 void ASTStmtReader::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   VisitStmt(S);
   S->setElement(Reader.ReadSubStmt());
@@ -2683,6 +2690,8 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
                                      Record[ASTStmtReader::NumExprFields],
                                      Record[ASTStmtReader::NumExprFields + 1]);
       break;
+    case EXPR_OBJC_ORIG_EXPR:
+      S = new (Context) ObjCOrigExpr(Empty);
     case EXPR_OBJC_ISA:
       S = new (Context) ObjCIsaExpr(Empty);
       break;

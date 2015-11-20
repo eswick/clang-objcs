@@ -1037,6 +1037,14 @@ void ASTStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   Code = serialization::EXPR_OBJC_MESSAGE_EXPR;
 }
 
+void ASTStmtWriter::VisitObjCOrigExpr(ObjCOrigExpr *E) {
+  VisitExpr(E);
+  Writer.AddSourceLocation(E->getAtLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = serialization::EXPR_OBJC_ORIG_EXPR;
+  // FIXME: What about Args?
+}
+
 void ASTStmtWriter::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   VisitStmt(S);
   Writer.AddStmt(S->getElement());

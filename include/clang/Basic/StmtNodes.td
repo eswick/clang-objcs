@@ -146,6 +146,7 @@ def ObjCArrayLiteral : DStmt<Expr>;
 def ObjCDictionaryLiteral : DStmt<Expr>;
 def ObjCEncodeExpr : DStmt<Expr>;
 def ObjCMessageExpr : DStmt<Expr>;
+def ObjCOrigExpr : DStmt<Expr>;
 def ObjCSelectorExpr : DStmt<Expr>;
 def ObjCProtocolExpr : DStmt<Expr>;
 def ObjCIvarRefExpr : DStmt<Expr>;

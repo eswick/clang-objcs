@@ -3146,6 +3146,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case ObjCSubscriptRefExprClass:
   case ObjCBridgedCastExprClass:
   case ObjCMessageExprClass:
+  case ObjCOrigExprClass:
   case ObjCPropertyRefExprClass:
   // FIXME: Classify these cases better.
     if (IncludePossibleEffects)
@@ -3490,6 +3491,54 @@ void ExtVectorElementExpr::getEncodedElementAccess(
 
     Elts.push_back(Index);
   }
+}
+
+ObjCOrigExpr::ObjCOrigExpr(ObjCMethodDecl *OMD, ArrayRef<Expr *> Args, SourceLocation at, SourceLocation rp) : 
+       Expr(ObjCOrigExprClass, OMD->getReturnType(), VK_RValue, OK_Ordinary,
+            OMD->getReturnTypeSourceInfo()->getType()->isDependentType(),
+            OMD->getReturnTypeSourceInfo()->getType()->isDependentType(),
+            OMD->getReturnTypeSourceInfo()->getType()->isInstantiationDependentType(),
+            OMD->getReturnTypeSourceInfo()->getType()->containsUnexpandedParameterPack()),
+
+  AtLoc(at), RParenLoc(rp), OMD(OMD) {
+    setNumArgs(Args.size());
+    Expr **MyArgs = getArgs();
+    for (unsigned I = 0; I != Args.size(); ++I) {
+      if (Args[I]->isTypeDependent())
+        ExprBits.TypeDependent = true;
+      if (Args[I]->isValueDependent())
+        ExprBits.ValueDependent = true;
+      if (Args[I]->isInstantiationDependent())
+        ExprBits.InstantiationDependent = true;
+      if (Args[I]->containsUnexpandedParameterPack())
+        ExprBits.ContainsUnexpandedParameterPack = true;
+    
+      MyArgs[I] = Args[I];
+    }
+}
+
+// ObjCMessageExpr
+Stmt::child_range ObjCOrigExpr::children() {
+  Stmt **begin;
+
+  begin = reinterpret_cast<Stmt **>(getArgs());
+  
+  return child_range(begin,
+                     reinterpret_cast<Stmt **>(getArgs() + getNumArgs()));
+}
+
+ObjCOrigExpr* ObjCOrigExpr::Create(const ASTContext &Context,
+                                   ObjCMethodDecl *OMD,
+                                   ArrayRef<Expr *> Args,
+                                   SourceLocation at,
+                                   SourceLocation rp) {
+  unsigned Size = sizeof(ObjCOrigExpr) + sizeof(void *) + 
+                  Args.size() * sizeof(Expr *);
+  
+  ObjCOrigExpr *Mem = (ObjCOrigExpr*)Context.Allocate(Size,
+                                       llvm::AlignOf<ObjCOrigExpr>::Alignment);
+  
+  return new (Mem) ObjCOrigExpr(OMD, Args, at, rp);
 }
 
 ObjCMessageExpr::ObjCMessageExpr(QualType T,

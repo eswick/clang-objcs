@@ -23,10 +23,13 @@ namespace clang {
 
   class ObjCMethodDecl;
   class ObjCHookDecl;
+  class ObjCOrigExpr;
 
 namespace CodeGen {
   class CodeGenFunction;
   class CodeGenModule;
+  class RValue;
+  class ReturnValueSlot;
 
 class CGObjCSRuntime {
 protected:
@@ -44,6 +47,10 @@ public:
                                        ObjCHookDecl *HD) = 0;
 
   std::vector<llvm::Function*> HookConstructors;
+  
+  virtual RValue GenerateOrigExpr(CodeGenFunction &CGF,
+                                  const ObjCOrigExpr *E,
+                                  ReturnValueSlot Return) = 0;
 };
 
 CGObjCSRuntime *CreateMobileSubstrateObjCSRuntime(CodeGenModule &CGM);

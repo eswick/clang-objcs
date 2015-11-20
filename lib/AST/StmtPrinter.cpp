@@ -2211,6 +2211,12 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
   OS << "]";
 }
 
+void StmtPrinter::VisitObjCOrigExpr(ObjCOrigExpr *Node) {
+  OS << "@orig(";
+  // TODO: Print arguments
+  OS << ")";
+}
+
 void StmtPrinter::VisitObjCBoolLiteralExpr(ObjCBoolLiteralExpr *Node) {
   OS << (Node->getValue() ? "__objc_yes" : "__objc_no");
 }

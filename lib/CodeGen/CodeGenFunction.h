@@ -2641,6 +2641,8 @@ public:
   llvm::Value *EmitObjCSelectorExpr(const ObjCSelectorExpr *E);
   RValue EmitObjCMessageExpr(const ObjCMessageExpr *E,
                              ReturnValueSlot Return = ReturnValueSlot());
+  RValue EmitObjCSOrigExpr(const ObjCOrigExpr *E,
+                           ReturnValueSlot Return = ReturnValueSlot());
 
   /// Retrieves the default cleanup kind for an ARC cleanup.
   /// Except under -fobjc-arc-eh, ARC cleanups are normal-only.
